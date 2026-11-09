@@ -1,0 +1,471 @@
+---
+title: "SkyTrack - Flight & Airport Analysis"
+author: "Lalit"
+date: "2026-11-03"
+output:
+  html_document:
+    theme: flatly
+    toc: true
+    toc_float: true
+    code_folding: show
+    df_print: paged
+---
+
+# 1. Introduction
+
+Flight operations generate large amounts of data related
+to airlines, airports, flight schedules, delays and
+travel distances.
+
+This project focuses on analysing flight records using
+R Programming. It aims to identify patterns in airline
+performance, airport traffic and flight delays through
+data analysis and visualization.
+
+## 1.1 Problem Statement
+
+Raw flight datasets contain information that can be
+difficult to understand without proper analysis.
+
+This project uses R Programming to clean, analyse and
+visualize flight data to identify important patterns
+and understand flight operational performance.
+
+## 1.2 Objectives
+
+The main objectives of this project are:
+
+- To analyse flight records and identify overall flight activity.
+- To compare the performance of different airlines.
+- To identify the busiest origin and destination airports.
+- To analyse departure and arrival delays.
+- To study flight status distribution.
+- To identify monthly and weekday flight trends.
+- To visualize flight information using statistical charts.
+- To develop an interactive and professional analytical report.
+
+## 1.3 Dataset Information
+
+The project uses a flight dataset containing 1,000
+records and 11 original columns.
+
+The dataset includes information about:
+
+- Flight identification
+- Flight date
+- Airline name
+- Origin airport
+- Destination airport
+- Scheduled departure time
+- Actual departure time
+- Departure delay
+- Arrival delay
+- Flight distance
+- Flight status
+
+The dataset contains simulated flight records and is
+used for academic analysis and visualization.
+
+# 2. Install and Load Packages
+
+R Programming provides several packages for data
+manipulation, statistical analysis and visualization.
+
+The following packages will be used in this project.
+```{r}
+packages <- c(
+  "tidyverse",
+  "dplyr",
+  "tidyr",
+  "ggplot2",
+  "readr",
+  "lubridate",
+  "knitr",
+  "DT",
+  "plotly"
+)
+
+new_packages <- packages[
+  !(packages %in% installed.packages()[, "Package"])
+]
+
+if(length(new_packages) > 0) {
+  install.packages(new_packages)
+}
+
+library(dplyr)
+library(tidyr)
+library(lubridate)
+library(ggplot2)
+library(plotly)
+library(DT)
+library(knitr)
+```
+## 2.1 Packages Used
+
+| Package | Purpose |
+|---|---|
+| tidyverse | Data manipulation |
+| dplyr | Data analysis |
+| tidyr | Data cleaning |
+| ggplot2 | Data visualization |
+| readr | CSV file import |
+| lubridate | Date and time analysis |
+| plotly | Interactive charts |
+| DT | Interactive data tables |
+| knitr | Report generation |
+
+# 3. Import Dataset
+The flight dataset is imported into R using the read_csv() function from the readr package.
+```{r}
+flights <- readr::read_csv("flights-1000.csv")
+head(flights)
+```
+
+## 3.1 Dataset Structure
+The structure of the dataset is examined to understand its columns and data types.
+```{r}
+str(flights)
+```
+
+## 3.2 Dataset Dimensions
+```{r}
+cat("Number of Rows:", nrow(flights))
+cat("\nNumber of Columns:", ncol(flights))
+```
+
+# 4. Exploratory Data Analysis
+
+Exploratory Data Analysis (EDA) is used to
+understand the structure, characteristics
+and patterns present in the flight dataset.
+
+## 4.1 Dataset Overview
+```{r}
+cat("Total Rows:", nrow(flights))
+cat("\nTotal Columns:", ncol(flights))
+
+head(flights)
+```
+
+## 4.2 Statistical Summary
+```{r}
+summary(flights)
+```
+
+## 4.3 Missing Value Analysis
+```{r}
+missing_values <- data.frame(
+  Column = names(flights),
+  Missing_Count = colSums(is.na(flights))
+)
+
+knitr::kable(
+  missing_values,
+  caption = "Missing Values in Flight Dataset"
+)
+```
+
+## 4.4 Duplicate Record Analysis
+```{r}
+duplicate_count <- sum(duplicated(flights))
+
+cat("Total Duplicate Records:", duplicate_count)
+```
+
+## 4.5 Flight Status Distribution
+```{r}
+status_analysis <- flights %>%
+  count(status, name = "Total_Flights")
+
+knitr::kable(
+  status_analysis,
+  caption = "Flight Status Distribution"
+)
+```
+
+# 5. Data Cleaning and Transformation
+
+Data cleaning is performed to improve data quality,
+handle missing values and prepare the dataset for analysis.
+
+## 5.1 Convert Data Types
+```{r}
+flights$flight_date <- as.Date(flights$flight_date)
+
+flights$airline <- as.factor(flights$airline)
+flights$origin <- as.factor(flights$origin)
+flights$destination <- as.factor(flights$destination)
+flights$status <- as.factor(flights$status)
+
+str(flights)
+```
+
+## 5.2 Create New Columns
+```{r}
+flights <- flights %>%
+  mutate(
+    month = lubridate::month(flight_date, label = TRUE),
+    weekday = lubridate::wday(flight_date, label = TRUE)
+  )
+
+head(flights)
+```
+
+## 5.3 Missing Values After Cleaning
+```{r}
+missing_after_cleaning <- data.frame(
+  Column = names(flights),
+  Missing_Values = colSums(is.na(flights))
+)
+
+knitr::kable(
+  missing_after_cleaning,
+  caption = "Missing Values After Data Preparation"
+)
+```
+
+## 5.4 Data Type Verification
+```{r}
+data_types <- data.frame(
+  Column = names(flights),
+  Data_Type = sapply(flights, function(x) class(x)[1])
+)
+
+knitr::kable(
+  data_types,
+  caption = "Dataset Column Data Types"
+)
+```
+
+## 5.5 Final Dataset Overview
+```{r}
+cat("Total Records:", nrow(flights))
+cat("\nTotal Columns:", ncol(flights))
+cat("\nDuplicate Records:", sum(duplicated(flights)))
+```
+
+# 6. Data Visualization
+
+Data visualization helps identify patterns and trends
+in airline operations and airport activities.
+
+## 6.1 Airline-wise Flight Distribution
+```{r}
+airline_count <- flights %>%
+  count(airline, name = "Total_Flights")
+
+ggplot(airline_count,
+       aes(x = reorder(airline, Total_Flights),
+           y = Total_Flights,
+           fill = airline)) +
+  geom_col() +
+  coord_flip() +
+  labs(
+    title = "Flight Distribution by Airline",
+    x = "Airline",
+    y = "Total Flights"
+  ) +
+  theme_minimal() +
+  theme(legend.position = "none")
+```
+
+## 6.2 Average Departure Delay by Airline
+```{r}
+airline_delay <- flights %>%
+  group_by(airline) %>%
+  summarise(
+    Average_Delay = mean(dep_delay_min, na.rm = TRUE)
+  )
+
+ggplot(airline_delay,
+       aes(x = reorder(airline, Average_Delay),
+           y = Average_Delay,
+           fill = airline)) +
+  geom_col() +
+  coord_flip() +
+  labs(
+    title = "Average Departure Delay by Airline",
+    x = "Airline",
+    y = "Average Delay (Minutes)"
+  ) +
+  theme_minimal() +
+  theme(legend.position = "none")
+```
+
+## 6.3 Top 10 Busiest Origin Airports
+```{r}
+airport_traffic <- flights %>%
+  count(origin, name = "Total_Flights") %>%
+  arrange(desc(Total_Flights)) %>%
+  slice_head(n = 10)
+
+ggplot(airport_traffic,
+       aes(x = reorder(origin, Total_Flights),
+           y = Total_Flights,
+           fill = Total_Flights)) +
+  geom_col() +
+  coord_flip() +
+  labs(
+    title = "Top 10 Busiest Origin Airports",
+    x = "Origin Airport",
+    y = "Total Flights",
+    fill = "Flights"
+  ) +
+  theme_minimal()
+```
+
+## 6.4 Flight Status Distribution
+```{r}
+status_analysis <- flights %>%
+  count(status, name = "Total_Flights")
+
+ggplot(status_analysis,
+       aes(x = status, y = Total_Flights, fill = status)) +
+  geom_col(width = 0.7) +
+  geom_text(
+    aes(label = Total_Flights),
+    vjust = -0.5,
+    size = 4
+  ) +
+  labs(
+    title = "Distribution of Flight Status",
+    x = "Flight Status",
+    y = "Number of Flights"
+  ) +
+  theme_minimal() +
+  theme(legend.position = "none")
+```
+
+## 6.5 Monthly Flight Trends
+```{r}
+monthly_flights <- flights %>%
+  count(month, name = "Total_Flights")
+
+ggplot(monthly_flights,
+       aes(x = month, y = Total_Flights, group = 1)) +
+  geom_line(linewidth = 1, color = "steelblue") +
+  geom_point(size = 3, color = "darkblue") +
+  geom_text(
+    aes(label = Total_Flights),
+    vjust = -0.8,
+    size = 3
+  ) +
+  labs(
+    title = "Monthly Flight Activity",
+    x = "Month",
+    y = "Total Flights"
+  ) +
+  theme_minimal()
+```
+
+# 7. Statistical Analysis and Key Insights
+## 7.1 Airline Performance Analysis
+
+```{r}
+airline_performance <- flights %>%
+  group_by(airline) %>%
+  summarise(
+    Total_Flights = n(),
+    Average_Departure_Delay = round(
+      mean(dep_delay_min, na.rm = TRUE), 2
+    ),
+    Average_Arrival_Delay = round(
+      mean(arr_delay_min, na.rm = TRUE), 2
+    ),
+    .groups = "drop"
+  ) %>%
+  arrange(desc(Total_Flights))
+
+knitr::kable(
+  airline_performance,
+  caption = "Airline Performance Analysis"
+)
+```
+
+## 7.2 Airport Traffic Analysis
+```{r}
+airport_analysis <- flights %>%
+  group_by(origin) %>%
+  summarise(
+    Total_Departures = n(),
+    Average_Delay = round(
+      mean(dep_delay_min, na.rm = TRUE), 2
+    ),
+    .groups = "drop"
+  ) %>%
+  arrange(desc(Total_Departures))
+
+knitr::kable(
+  head(airport_analysis, 10),
+  caption = "Top 10 Airports by Departure Traffic"
+)
+```
+
+## 7.3 Overall Flight Statistics
+```{r}
+overall_statistics <- flights %>%
+  summarise(
+    Total_Flights = n(),
+    Average_Departure_Delay = round(
+      mean(dep_delay_min, na.rm = TRUE), 2
+    ),
+    Average_Arrival_Delay = round(
+      mean(arr_delay_min, na.rm = TRUE), 2
+    ),
+    Average_Distance_KM = round(
+      mean(distance_km, na.rm = TRUE), 2
+    )
+  )
+
+knitr::kable(
+  overall_statistics,
+  caption = "Overall Flight Statistics"
+)
+```
+
+# 8. Key Findings
+
+The analysis of the flight dataset provides the following
+important observations:
+
+- The dataset contains 1,000 simulated flight records.
+- Flight status analysis helps compare on-time, delayed,
+  cancelled and diverted flights.
+- Airline performance analysis compares flight volumes
+  and average departure and arrival delays.
+- Airport traffic analysis identifies the busiest
+  origin airports.
+- Monthly analysis highlights changes in flight activity.
+- Data quality analysis identifies missing values and
+  duplicate records.
+  
+# 9. Conclusion
+
+The SkyTrack project demonstrates how R Programming
+can be used for flight data analysis and visualization.
+
+The project covers data importing, data cleaning,
+exploratory data analysis, statistical analysis and
+graphical representation.
+
+The visualizations and analytical tables help understand
+airline activity, airport traffic, flight delays and
+monthly flight trends.
+
+This project provides practical experience in using
+R packages such as dplyr, tidyr, ggplot2, lubridate
+and plotly.
+
+Since the dataset contains simulated records, the
+findings are intended for academic analysis and do
+not represent actual airline performance.
+
+
+# 10. References
+
+1. R Programming Documentation – https://www.r-project.org/
+2. Tidyverse Documentation – https://www.tidyverse.org/
+3. ggplot2 Documentation – https://ggplot2.tidyverse.org/
+4. dplyr Documentation – https://dplyr.tidyverse.org/
+5. RStudio Documentation – https://posit.co/
