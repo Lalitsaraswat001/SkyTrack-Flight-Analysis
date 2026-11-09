@@ -75,7 +75,7 @@ To run the dashboard (if included), open `SkyTrack_Dashboard.Rmd` and click **Kn
 
 ## 🌐 Live report
 
-[View the report here](#) *(add your GitHub Pages link after enabling Pages)*
+[View the report here]( https://lalitsaraswat001.github.io/SkyTrack-Flight-Analysis/)
 
 ---
 
